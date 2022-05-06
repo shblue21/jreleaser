@@ -1,0 +1,49 @@
+name: EarlyAccess-Windows
+
+on:
+  workflow_dispatch:
+
+
+env:
+  JAVA_VERSION: '11'
+  JAVA_DISTRO: 'zulu'
+
+jobs:
+  precheck:
+    name: Precheck
+    if: github.repository == 'jreleaser/jreleaser' && startsWith(github.event.head_commit.message, 'Releasing version') != true
+    runs-on: ubuntu-latest
+    outputs:
+      VERSION: ${{ steps.vars.outputs.VERSION }}
+      JAVA_VERSION: ${{ env.JAVA_VERSION }}
+      JAVA_DISTRO: ${{ env.JAVA_DISTRO }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - uses: n1hility/cancel-previous-runs@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Version
+        id: vars
+        shell: bash
+        run: |
+          echo ::set-output name=VERSION::$(cat VERSION)
+
+  jlink:
+    needs: [precheck]
+    if: endsWith(${{ needs.precheck.outputs.VERSION }}, '-SNAPSHOT')
+    uses: jreleaser/jreleaser/.github/workflows/step-jlink.yml@main
+    with:
+      java-version: ${{ needs.precheck.outputs.JAVA_VERSION }}
+      java-distro: ${{ needs.precheck.outputs.JAVA_DISTRO }}
+      project-version: ${{ needs.precheck.outputs.VERSION }}
+
+  jpackage:
+    needs: [precheck, jlink]
+    uses: jreleaser/jreleaser/.github/workflows/step-jpackage-windows.yml@main
+    with:
+      java-version: ${{ needs.precheck.outputs.JAVA_VERSION }}
+      java-distro: ${{ needs.precheck.outputs.JAVA_DISTRO }}
+      project-version: ${{ needs.precheck.outputs.VERSION }}
