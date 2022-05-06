@@ -1,4 +1,4 @@
-name: JPackage
+name: JPackage-windows
 
 on:
   workflow_call:
@@ -89,8 +89,4 @@ jobs:
           retention-days: 1
           name: jpackage
           path: |
-            out/jreleaser/assemble/jreleaser-installer/jpackage/*.pkg
             out/jreleaser/assemble/jreleaser-installer/jpackage/*.msi
-            out/jreleaser/assemble/jreleaser-installer/jpackage/*.exe
-            out/jreleaser/assemble/jreleaser-installer/jpackage/*.deb
-            out/jreleaser/assemble/jreleaser-installer/jpackage/*.rpm
