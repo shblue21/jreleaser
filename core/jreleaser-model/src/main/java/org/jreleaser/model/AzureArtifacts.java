@@ -166,7 +166,6 @@ public class AzureArtifacts extends AbstractUploader {
         return resolveUrl(context.fullProps(), artifact);
     }
     
-
     private String resolveUrl(Map<String,Object> props, Artifact artifact) {
         Map<String, Object> p = new LinkedHashMap<>(artifactProps(props, artifact));
         p.put("azuredevopsHost", host);
