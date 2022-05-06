@@ -11,7 +11,7 @@ env:
 jobs:
   precheck:
     name: Precheck
-    if: github.repository == 'jreleaser/jreleaser' && startsWith(github.event.head_commit.message, 'Releasing version') != true
+    if: github.repository == 'shblue21/jreleaser' && startsWith(github.event.head_commit.message, 'Releasing version') != true
     runs-on: ubuntu-latest
     outputs:
       VERSION: ${{ steps.vars.outputs.VERSION }}
@@ -34,7 +34,7 @@ jobs:
   jlink:
     needs: [precheck]
     if: endsWith(${{ needs.precheck.outputs.VERSION }}, '-SNAPSHOT')
-    uses: jreleaser/jreleaser/.github/workflows/step-jlink.yml@main
+    uses: shblue21/jreleaser/.github/workflows/step-jlink.yml@main
     with:
       java-version: ${{ needs.precheck.outputs.JAVA_VERSION }}
       java-distro: ${{ needs.precheck.outputs.JAVA_DISTRO }}
@@ -42,7 +42,7 @@ jobs:
 
   jpackage:
     needs: [precheck, jlink]
-    uses: jreleaser/jreleaser/.github/workflows/step-jpackage-windows.yml@main
+    uses: shblue21/jreleaser/.github/workflows/step-jpackage-windows.yml@main
     with:
       java-version: ${{ needs.precheck.outputs.JAVA_VERSION }}
       java-distro: ${{ needs.precheck.outputs.JAVA_DISTRO }}
