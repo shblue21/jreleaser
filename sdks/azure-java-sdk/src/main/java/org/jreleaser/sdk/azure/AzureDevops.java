@@ -17,17 +17,36 @@
  */
 package org.jreleaser.sdk.azure;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 import org.jreleaser.bundle.RB;
+import org.jreleaser.model.Artifact;
 import org.jreleaser.model.JReleaserVersion;
+import org.jreleaser.model.Project;
 import org.jreleaser.model.uploader.spi.UploadException;
+import org.jreleaser.sdk.azure.api.AzureDevopsAPI;
+import org.jreleaser.sdk.azure.api.ResourceUrl;
+import org.jreleaser.sdk.commons.ClientUtils;
+import org.jreleaser.sdk.commons.RestAPIException;
 import org.jreleaser.util.JReleaserLogger;
+
+import feign.Feign;
+import feign.Request;
+import feign.form.FormEncoder;
+import feign.jackson.JacksonDecoder;
+import feign.jackson.JacksonEncoder;
 
 /**
  * @author JIHUN KIM
@@ -35,73 +54,55 @@ import org.jreleaser.util.JReleaserLogger;
  */
 
 public class AzureDevops {
+
     public static final String RESOURCE_MAVEN = "6F7F8C07-FF36-473C-BCF3-BD6CC9B6C066"; // "https://pkgs.dev.azure.com/shblue21/"
     public static final String RESOURCE_PACKAGING = "7ab4e64e-c4d8-4f50-ae73-5ef2e21642a5"; // "https://feeds.dev.azure.com/shblue21/"
+    public static final String RESOURCE_WIKI = "BF7D82A0-8AA5-4613-94EF-6172A5EA01F3"; // "https://feeds.dev.azure.com/shblue21/"
+
     private final JReleaserLogger logger;
+    private final AzureDevopsAPI api;
 
-    public AzureDevops(JReleaserLogger logger) {
+    public AzureDevops(JReleaserLogger logger, String apiHost, String token,
+            int connectTimeout, int readTimeout) throws IOException, UploadException {
+        requireNonNull(logger, "'logger' must not be null");
         this.logger = logger;
+
+        ObjectMapper objectMapper = new ObjectMapper()
+                .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+                .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .configure(SerializationFeature.INDENT_OUTPUT, true);
+
+        this.api = ClientUtils.builder(logger, connectTimeout, readTimeout)
+            .encoder(new FormEncoder(new JacksonEncoder(objectMapper)))
+            .decoder(new JacksonDecoder(objectMapper))
+            .requestInterceptor(template -> template.header("Authorization", String.format("Basic %s", token)))
+            .target(AzureDevopsAPI.class, apiHost);
     }
 
-    public String getLocationUrl(String host, String organization, String resourceAreaID) throws UploadException {
-        String resourceAreasUrl = new StringBuilder().append(host)
-                .append(organization)
-                .append("/_apis/resourceAreas/")
-                .append(resourceAreaID)
-                .toString();
-
-        try {
-            URL url = new URL(resourceAreasUrl.toString());
-            logger.debug("resourceAreasUrl: {}", resourceAreasUrl);
-
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setAllowUserInteraction(false);
-            connection.setRequestMethod("GET");
-            connection.addRequestProperty("Content-Type", "application/json");
-            connection.addRequestProperty("Accept", "application/json");
-            connection.addRequestProperty("User-Agent", "JReleaser/" + JReleaserVersion.getPlainVersion());
-            connection.setDoOutput(true);
-
-            ObjectMapper mapper = new ObjectMapper();
-            LocationUrl locationUrl = mapper.readValue(connection.getInputStream(), LocationUrl.class);
-
-            return locationUrl.getLocationUrl();
-
-        } catch (IOException e) {
-            throw new UploadException(RB.$("ERROR_unexpected_upload"), e);
-        }
+    public ResourceUrl getLocationUrl(String organization, String resourceAreaID) {
+        return api.getLocationUrl(organization, resourceAreaID);
     }
 
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public class LocationUrl {
-        private String id;
-
-        private String name;
-
-        private String locationUrl;
-
-        public String getId() {
-            return id;
+    public void publishArtifacts(String organization, String azureProject, String feed, String path, List<Artifact> artifacts) throws UploadException {
+        String locationUrl= getLocationUrl(organization, RESOURCE_MAVEN).getLocationUrl();
+        for(Artifact artifact : artifacts) {
+            
         }
 
-        public void setId(String id) {
-            this.id = id;
-        }
 
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public String getLocationUrl() {
-            return locationUrl;
-        }
-
-        public void setLocationUrl(String locationUrl) {
-            this.locationUrl = locationUrl;
-        }
+        // api.publishMvnPackage(locationUrl, project, feed, packageId, version,
+        // fileName);
     }
+
+
+    // public void createRelease(String owner, String repoName, String identifier,
+    // Release release) throws RestAPIException {
+    // logger.debug(RB.$("git.create.release"), owner, repoName,
+    // release.getTagName());
+
+    // Project project = getProject(repoName, identifier);
+
+    // api.createWiki(release, project.getId());
+    // }
 }
