@@ -45,6 +45,7 @@ public class Upload extends AbstractModelObject<Upload> implements Domain, Activ
     private final Map<String, S3> s3 = new LinkedHashMap<>();
     private final Map<String, ScpUploader> scp = new LinkedHashMap<>();
     private final Map<String, SftpUploader> sftp = new LinkedHashMap<>();
+    private final Map<String, AzureArtifacts> azureArtifacts = new LinkedHashMap<>();
 
     private Active active;
     @JsonIgnore
@@ -136,6 +137,8 @@ public class Upload extends AbstractModelObject<Upload> implements Domain, Activ
                 return Optional.ofNullable(scp.get(name));
             case SftpUploader.TYPE:
                 return Optional.ofNullable(sftp.get(name));
+            case AzureArtifacts.TYPE:
+                return Optional.ofNullable(azureArtifacts.get(name));
         }
 
         return Optional.empty();
@@ -197,6 +200,13 @@ public class Upload extends AbstractModelObject<Upload> implements Domain, Activ
 
     public Optional<SftpUploader> getActiveSftp(String name) {
         return sftp.values().stream()
+            .filter(Uploader::isEnabled)
+            .filter(a -> name.equals(a.name))
+            .findFirst();
+    }
+
+    public Optional<AzureArtifacts> getActiveAzureArtifacts(String name) {
+        return azureArtifacts.values().stream()
             .filter(Uploader::isEnabled)
             .filter(a -> name.equals(a.name))
             .findFirst();
@@ -328,6 +338,25 @@ public class Upload extends AbstractModelObject<Upload> implements Domain, Activ
         this.sftp.put(sftp.getName(), sftp);
     }
 
+    public List<AzureArtifacts> getActiveAzureArtifactses() {
+        return azureArtifacts.values().stream()
+            .filter(AzureArtifacts::isEnabled)
+            .collect(toList());
+    }
+
+    public Map<String, AzureArtifacts> getAzureArtifacts() {
+        return azureArtifacts;
+    }
+
+    public void setAzureArtifacts(Map<String, AzureArtifacts> azureArtifacts) {
+        this.azureArtifacts.clear();
+        this.azureArtifacts.putAll(azureArtifacts);
+    }
+
+    public void addAzureArtifacts(AzureArtifacts azureArtifacts) {
+        this.azureArtifacts.put(azureArtifacts.getName(), azureArtifacts);
+    }
+
     @Override
     public Map<String, Object> asMap(boolean full) {
         Map<String, Object> map = new LinkedHashMap<>();
@@ -376,6 +405,13 @@ public class Upload extends AbstractModelObject<Upload> implements Domain, Activ
             .collect(toList());
         if (!sftp.isEmpty()) map.put("sftp", sftp);
 
+        List<Map<String, Object>> azureArtifacts = this.azureArtifacts.values()
+            .stream()
+            .filter(d -> full || d.isEnabled())
+            .map(d -> d.asMap(full))
+            .collect(toList());
+        if (!azureArtifacts.isEmpty()) map.put("azureArtifacts", azureArtifacts);
+
         return map;
     }
 
@@ -393,6 +429,8 @@ public class Upload extends AbstractModelObject<Upload> implements Domain, Activ
                 return (Map<String, A>) scp;
             case SftpUploader.TYPE:
                 return (Map<String, A>) sftp;
+            case AzureArtifacts.TYPE:
+                return (Map<String, A>) azureArtifacts;
         }
 
         return Collections.emptyMap();
@@ -406,6 +444,7 @@ public class Upload extends AbstractModelObject<Upload> implements Domain, Activ
         uploaders.addAll((List<A>) getActiveS3s());
         uploaders.addAll((List<A>) getActiveScps());
         uploaders.addAll((List<A>) getActiveSftps());
+        uploaders.addAll((List<A>) getActiveAzureArtifactses());
         return uploaders;
     }
 
@@ -467,6 +506,7 @@ public class Upload extends AbstractModelObject<Upload> implements Domain, Activ
         set.add(S3.TYPE);
         set.add(ScpUploader.TYPE);
         set.add(SftpUploader.TYPE);
+        set.add(AzureArtifacts.TYPE);
         return Collections.unmodifiableSet(set);
     }
 }
