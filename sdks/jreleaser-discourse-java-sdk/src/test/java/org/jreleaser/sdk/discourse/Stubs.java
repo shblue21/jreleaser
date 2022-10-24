@@ -19,8 +19,6 @@ package org.jreleaser.sdk.discourse;
 
 import com.github.tomakehurst.wiremock.matching.RequestPatternBuilder;
 
-import java.io.IOException;
-
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 /**
