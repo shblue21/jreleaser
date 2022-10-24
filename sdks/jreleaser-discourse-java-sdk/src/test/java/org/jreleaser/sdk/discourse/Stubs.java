@@ -28,16 +28,16 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
  * @since 1.3.0
  */
 class Stubs {
-    static void verifyPost(String endpoint, String maybeJson) {
-        verifyRequest(postRequestedFor(urlEqualTo(endpoint)), maybeJson);
+    static void verifyPost(String endpoint, String json) {
+        verifyRequest(postRequestedFor(urlEqualTo(endpoint)), json);
     }
 
 
     private static void verifyRequest(RequestPatternBuilder builder, String json) {
         verify(builder.withHeader("Content-Type", equalTo("application/json"))
                 .withHeader("Accept", equalTo("application/json"))
-                .withHeader("Consumer-Key", equalTo("CONSUMER_KEY"))
-                .withHeader("Consumer-Token", equalTo("CONSUMER_TOKEN"))
+                .withHeader("Api-Key", equalTo("API-KEY"))
+                .withHeader("Api-Username", equalTo("API-USERNAME"))
 //                .withHeader("Api-Key", equalTo("CONSUMER_KEY"))
 //                .withHeader("Api-Username", equalTo("CONSUMER_TOKEN"))
                 .withRequestBody(equalToJson(json)));

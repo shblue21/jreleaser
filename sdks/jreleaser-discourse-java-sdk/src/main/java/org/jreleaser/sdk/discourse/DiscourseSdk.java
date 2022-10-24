@@ -53,14 +53,14 @@ public class DiscourseSdk {
      private DiscourseSdk(JReleaserLogger logger,
                          String host,
                          String userName,
-                         String token,
+                         String apiKey,
                          int connectTimeout,
                          int readTimeout,
                          boolean dryrun) {
          requireNonNull(logger, "'logger' must not be null");
          requireNonBlank(host, "'host' must not be blank");
-         requireNonBlank(token, "'userName' must not be blank");
-         requireNonBlank(token, "'token' must not be blank");
+         requireNonBlank(userName, "'userName' must not be blank");
+         requireNonBlank(apiKey, "'apiKey' must not be blank");
 
          ObjectMapper objectMapper = new ObjectMapper()
                  .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
@@ -76,20 +76,12 @@ public class DiscourseSdk {
                  .decoder(new JacksonDecoder(objectMapper))
                  .requestInterceptor(template -> {
                      template.header("User-Agent", "JReleaser/" + JReleaserVersion.getPlainVersion());
-                     template.header("Api-Key", token);
+                     template.header("Api-Key", apiKey);
                      template.header("Api-Username", userName);
                  })
                  .errorDecoder((methodKey, response) -> new RestAPIException(response.request(), response.status(), response.reason(), response.headers()))
                  .options(new Request.Options(connectTimeout, TimeUnit.SECONDS, readTimeout, TimeUnit.SECONDS, true))
                  .target(DiscourseAPI.class, host);
-//         this.api = ClientUtils.builder(logger, connectTimeout, readTimeout)
-//             .encoder(new JacksonEncoder())
-//             .decoder(new JacksonDecoder(objectMapper)
-//             .requestInterceptor(template -> {
-//                 template.header("Api-Username", userName);
-//                 template.header("Api-Key", token);
-//             })
-//             .target(DiscourseAPI.class, host);
 
          this.logger.debug(RB.$("workflow.dryrun"), dryrun);
      }
@@ -130,7 +122,7 @@ public class DiscourseSdk {
          private final JReleaserLogger logger;
          private boolean dryrun;
          private String userName;
-         private String token;
+         private String apiKey;
          private String host;
          private int connectTimeout = 20;
          private int readTimeout = 60;
@@ -148,8 +140,8 @@ public class DiscourseSdk {
              this.userName = requireNonBlank(userName, "'userName' must not be blank").trim();
              return this;
          }
-         public Builder token(String accessToken) {
-             this.token = requireNonBlank(accessToken, "'token' must not be blank").trim();
+         public Builder apiKey(String accessToken) {
+             this.apiKey = requireNonBlank(accessToken, "'apiKey' must not be blank").trim();
              return this;
          }
 
@@ -171,7 +163,7 @@ public class DiscourseSdk {
          private void validate() {
              requireNonBlank(host, "'host' must not be blank");
              requireNonBlank(userName, "'userName' must not be blank");
-             requireNonBlank(token, "'token' must not be blank");
+             requireNonBlank(apiKey, "'apiKey' must not be blank");
          }
 
          public DiscourseSdk build() {
@@ -181,7 +173,7 @@ public class DiscourseSdk {
                  logger,
                  host,
                  userName,
-                 token,
+                 apiKey,
                  connectTimeout,
                  readTimeout,
                  dryrun);
