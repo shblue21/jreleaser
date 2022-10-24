@@ -14,6 +14,19 @@ on:
         default: 'zulu'
         required: false
         type: string
+  workflow_dispatch:
+    inputs:
+      project-version:
+        required: true
+        type: string
+      java-version:
+        default: '11'
+        required: false
+        type: string
+      java-distro:
+        default: 'zulu'
+        required: false
+        type: string
 
 jobs:
   jpackage:
