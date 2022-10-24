@@ -40,7 +40,7 @@ public class DiscoursePostTest {
         stubFor(post(urlEqualTo(POSTS_ENDPOINT))
             .willReturn(okJson("{\"topic_id\": 1, \"post_number\": 1}")));
         stubFor(get(urlEqualTo(CATEGORIES_ENDPOINT))
-            .willReturn(okJson("{\"category_list\":{\"categories\":[{\"id\":1,\"name\":\"announce\"}]}}")));
+            .willReturn(okJson("{\"category_list\":{\"categories\":[{\"id\":1, \"name\":\"announce\"}]}}")));
 
 
         DiscourseSdk sdk = DiscourseSdk
@@ -50,7 +50,7 @@ public class DiscoursePostTest {
             .host(api.baseUrl())
             .build();
         // when:
-        sdk.createPost("App 1.0.0","App 1.0.0 has been released","announce");
+        sdk.createPost("App 1.0.0", "App 1.0.0 has been released", "announce");
 
 
         // then:
