@@ -56,12 +56,10 @@ public class DiscoursePostTest {
         // then:
         Stubs.verifyPost(POSTS_ENDPOINT, "{\n" +
                 "   \"title\": \"App 1.0.0\",\n" +
-                "   \"raw\": \"App 1.0.0 has been released\"\n" +
-                "    \"category\": 1 \n" +
+                "   \"raw\": \"App 1.0.0 has been released\",\n" +
+                "    \"category\": \"1\" \n" +
                 "}"
         );
-
-
     }
 //
 //    @Test
